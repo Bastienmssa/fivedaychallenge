@@ -1,0 +1,7 @@
+duckdb
+pandas
+fastapi
+uvicorn
+pyarrow
+fastparquet
+fastapi

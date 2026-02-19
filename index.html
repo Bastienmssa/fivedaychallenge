@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portail SIRENE / RNA</title>
+    <style>
+        :root {
+            --primary-color: #000091; /* Bleu Marianne officiel */
+            --bg-color: #f6f6f6;
+            --text-color: #1e1e1e;
+            --border-color: #e5e5e5;
+            --success-bg: #e3ebd3;
+            --success-text: #2f5a28;
+            --font-family: 'Marianne', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.5;
+        }
+
+        header {
+            background-color: #fff;
+            border-bottom: 2px solid var(--primary-color);
+            padding: 20px 40px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 24px;
+            color: var(--primary-color);
+        }
+
+        header p {
+            margin: 5px 0 0 0;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .search-panel {
+            background: #fff;
+            padding: 24px;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid var(--border-color);
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        input {
+            padding: 12px;
+            border: 1px solid #707070;
+            border-radius: 4px;
+            font-size: 16px;
+            font-family: inherit;
+        }
+
+        input:focus {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        #mainInput { flex: 2; min-width: 250px; }
+        #cpInput { flex: 1; min-width: 120px; }
+
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: #fff;
+        }
+        
+        .btn-primary:hover { background-color: #1212ff; }
+
+        .btn-secondary {
+            background-color: #e5e5e5;
+            color: var(--text-color);
+        }
+
+        .btn-secondary:hover { background-color: #cecece; }
+
+        #results-area {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .card {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--primary-color);
+            padding: 20px;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .badge {
+            font-size: 12px;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        .badge-asso { background-color: var(--success-bg); color: var(--success-text); }
+        .badge-ent { background-color: #e3e3fb; color: var(--primary-color); }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            background: #f9f9f9;
+            padding: 16px;
+            border-radius: 4px;
+            margin-top: 12px;
+        }
+
+        .data-item span {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        .data-item strong {
+            font-size: 14px;
+            color: var(--text-color);
+        }
+
+        .message {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            background: #fff;
+            border: 1px dashed #ccc;
+            border-radius: 4px;
+        }
+
+        .error { color: #d1335b; border-color: #d1335b; background: #fdf5f7; }
+
+        .loader {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: #666;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Annuaire National des Entreprises & Associations</h1>
+        <p>Interface de consultation de la base de données unifiée (SIRENE / RNA)</p>
+    </header>
+
+    <div class="container">
+        <div class="search-panel">
+            <div class="form-group">
+                <input type="text" id="mainInput" placeholder="Recherche par nom ou n° SIRET (14 chiffres)..." autocomplete="off">
+                <input type="text" id="cpInput" placeholder="Code Postal / Dépt" maxlength="5" autocomplete="off">
+                <button class="btn-primary" id="btnSearch">Rechercher</button>
+                <button class="btn-secondary" id="btnStats">Statistiques CP</button>
+            </div>
+        </div>
+
+        <div class="loader" id="loader">Recherche en cours dans la base de données...</div>
+
+        <div id="results-area">
+            <div class="message">Saisissez vos critères de recherche pour interroger le registre.</div>
+        </div>
+    </div>
+
+    <script>
+        // Utilisation stricte de window.location.origin pour s'adapter dynamiquement a l'IP de la VM
+        const API_BASE = window.location.origin + "/api/v1";
+
+        const mainInput = document.getElementById('mainInput');
+        const cpInput = document.getElementById('cpInput');
+        const btnSearch = document.getElementById('btnSearch');
+        const btnStats = document.getElementById('btnStats');
+        const resultsArea = document.getElementById('results-area');
+        const loader = document.getElementById('loader');
+
+        function showMessage(msg, isError = false) {
+            resultsArea.innerHTML = `<div class="message ${isError ? 'error' : ''}">${msg}</div>`;
+        }
+
+        async function fetchAPI(url) {
+            loader.style.display = 'block';
+            resultsArea.innerHTML = '';
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    if (response.status === 404) throw new Error("Aucune donnée trouvée pour cette requête.");
+                    throw new Error(`Erreur serveur (${response.status})`);
+                }
+                return await response.json();
+            } catch (error) {
+                showMessage(error.message, true);
+                throw error;
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        btnSearch.addEventListener('click', async () => {
+            const query = mainInput.value.trim();
+            const cp = cpInput.value.trim();
+            
+            if (!query) {
+                showMessage("Veuillez saisir un nom ou un SIRET.", true);
+                return;
+            }
+
+            // Detection SIRET automatique
+            const isSiret = /^\\d{14}$/.test(query.replace(/\\s+/g, ''));
+
+            if (isSiret) {
+                const cleanSiret = query.replace(/\\s+/g, '');
+                const data = await fetchAPI(`${API_BASE}/siret/${cleanSiret}`);
+                if(data) renderSiret(data);
+            } else {
+                let url = `${API_BASE}/search?q=${encodeURIComponent(query)}`;
+                if (cp) {
+                    url += (cp.length === 5) ? `&postal_code=${cp}` : `&dept=${cp}`;
+                }
+                const data = await fetchAPI(url);
+                if(data && data.results) renderSearch(data.results);
+            }
+        });
+
+        btnStats.addEventListener('click', async () => {
+            const cp = cpInput.value.trim();
+            if (cp.length !== 5) {
+                showMessage("Veuillez saisir un code postal valide à 5 chiffres dans le champ dédié.", true);
+                return;
+            }
+            const data = await fetchAPI(`${API_BASE}/stats/${cp}`);
+            if(data) renderStats(data);
+        });
+
+        function renderSiret(data) {
+            const isAsso = data.asso_id && data.asso_id.id_rna !== null;
+            const lat = data.location.latitude ? parseFloat(data.location.latitude).toFixed(4) : 'N/A';
+            const lon = data.location.longitude ? parseFloat(data.location.longitude).toFixed(4) : 'N/A';
+
+            resultsArea.innerHTML = `
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <h2 class="card-title">${data.identity.nom_raison_sociale}</h2>
+                            <span style="color: #666; font-size: 14px;">SIRET : ${data.identity.siret}</span>
+                        </div>
+                        <span class="badge ${isAsso ? 'badge-asso' : 'badge-ent'}">${isAsso ? 'Association' : 'Entreprise'}</span>
+                    </div>
+                    <div class="data-grid">
+                        <div class="data-item"><span>Statut API</span><strong>${data.identity.status === 'A' ? 'En activité' : 'Cessée'}</strong></div>
+                        <div class="data-item"><span>N° RNA</span><strong>${isAsso ? data.asso_id.id_rna : 'Non applicable'}</strong></div>
+                        <div class="data-item"><span>Localisation</span><strong>${data.location.code_postal} ${data.location.commune}</strong></div>
+                        <div class="data-item"><span>Coordonnées GPS</span><strong>${lat} / ${lon}</strong></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderSearch(results) {
+            if (results.length === 0) {
+                showMessage("Aucun résultat pour cette recherche.");
+                return;
+            }
+
+            let html = '';
+            results.forEach(item => {
+                html += `
+                    <div class="card">
+                        <div class="card-header" style="margin-bottom: 0;">
+                            <div>
+                                <h3 class="card-title" style="font-size: 16px;">${item.name}</h3>
+                                <span style="color: #666; font-size: 14px;">${item.siret} - ${item.city}</span>
+                            </div>
+                            <span class="badge ${item.is_association ? 'badge-asso' : 'badge-ent'}">${item.is_association ? 'Association' : 'Entreprise'}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            resultsArea.innerHTML = html;
+        }
+
+        function renderStats(data) {
+            resultsArea.innerHTML = `
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Statistiques pour le code postal ${data.zone}</h2>
+                    </div>
+                    <div class="data-grid">
+                        <div class="data-item"><span>Total Entités</span><strong style="font-size: 24px;">${data.total_entites}</strong></div>
+                        <div class="data-item"><span>Associations</span><strong style="font-size: 24px; color: var(--success-text);">${data.repartition.associations}</strong></div>
+                        <div class="data-item"><span>Entreprises</span><strong style="font-size: 24px; color: var(--primary-color);">${data.repartition.entreprises_pures}</strong></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Gestion de la touche Entree
+        mainInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') btnSearch.click(); });
+        cpInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') btnSearch.click(); });
+    </script>
+</body>
+</html>
